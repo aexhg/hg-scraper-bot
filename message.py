@@ -6,13 +6,13 @@ from telegram import Update
 import logging
 
 
-
 TOKEN = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 updater = Updater(TOKEN)
 
+
 def send_message(message: str):
-    pass
+    updater.bot.send_message(CHAT_ID, message)
 
 
 def chat_id(update: Update, context: CallbackContext):
@@ -21,7 +21,7 @@ def chat_id(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id, f"The chat id is {chat_id}")
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG)
     logging.info("Starting telegram bot")

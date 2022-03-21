@@ -1,5 +1,6 @@
 import dataclasses
 import logging
+import os
 
 import sys
 from datetime import datetime as dt
@@ -20,7 +21,7 @@ import message
 import db
 
 # logging.basicConfig(level=logging.DEBUG)
-USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
+USER_AGENT = 'Mozilla/5.0 (X11; CrOS x86_64 14469.41.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.57 Safari/537.36'
 LOG = logging.getLogger(__name__)
 
 
@@ -50,7 +51,7 @@ class Shops:
 def _is_available_to_buy_argos(driver: WebDriver, item_name: str, url: str) -> Any:
     LOG.info(f"Loading {url} for item {item_name}")
     driver.get(url)
-    #driver.save_screenshot(f'{item_name}.png')
+    # driver.save_screenshot(f'{item_name}.png')
     # check for accept cookies button
     try:
         accept_cookies_button = WebDriverWait(driver, 10).until(
@@ -80,18 +81,22 @@ def _create_chrome_web_driver():
     # options.add_argument("headless")
     options.add_argument(f"user_agent={USER_AGENT}")
     options.add_argument("--window-size=1920,1080")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--proxy-server='direct://'")
-    options.add_argument("--proxy-bypass-list=*")
-    options.add_argument("--start-maximized")
-    # options.add_argument("--headless") can't get this to work for now
-    options.add_argument("--disable-gpu")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--ignore-certificate-errors")
-    options.add_argument("--lang=en-us")
+    # options.add_argument("--disable-extensions")
+    # options.add_argument("--proxy-server='direct://'")
+    # options.add_argument("--proxy-bypass-list=*")
+    # options.add_argument("--start-maximized")
+    # options.add_argument("--headless")# can't get this to work for now
+    # options.add_argument("--disable-gpu")
+    # options.add_argument("--disable-dev-shm-usage")
+    # options.add_argument("--no-sandbox")
+    # options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--lang=en-GB")
+    options.add_argument('--disable-blink-features=AutomationControlled')
 
     driver = webdriver.Chrome(options=options)
+    # Remove navigator.webdriver Flag using JavaScript
+    #driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
     return driver
 
 
@@ -133,9 +138,14 @@ def _load_shops(filepath: str) -> Shops:
 @click.command()
 @click.argument("config_filepath")
 def run(config_filepath: str):
-    shops = _load_shops(config_filepath)
     driver = _create_chrome_web_driver()
-    _run_shops(shops, driver)
+
+    while True:
+        if os.environ.get("SHUTDOWN"):
+            break
+        shops = _load_shops(config_filepath)
+        _run_shops(shops, driver)
+
     driver.quit()
 
 
