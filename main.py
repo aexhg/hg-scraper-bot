@@ -47,6 +47,32 @@ class Shops:
 
         return cls(shops)
 
+def is_available_to_by_currys(driver: WebDriver, item_name: str, url: str) -> Any:
+    LOG.info(f"Loading {url} for item {item_name}")
+    driver.get(url)
+
+    try:
+        cookies_button = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.ID, "onetrust-accept-btn-handler"))
+        )
+        cookies_button.click()
+    except TimeoutException:
+        LOG.debug("No cookies button found for Currys")
+
+    css_selector = "#js-product-detail > div:nth-child(1) > div.row.m-0.product-tile-name-wrapper-text > div.col-lg-4.col-xl-4.col-12.col-md-4.col-sm-4.attributes-section > div > div.prices-add-to-cart-actions > div.addToCartActionButton > div > div > button"
+
+    try:
+        buy_button = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, css_selector))
+        )
+        if buy_button.is_enabled():
+            LOG.debug(f"{item_name} is available to buy from Currys")
+            return True
+        LOG.debug(f"{item_name} is not available to buy from Currys")
+        return False
+    except TimeoutException:
+        LOG.info(f"The buy button was not found for Currys item {item_name}")
+
 
 def _is_available_to_buy_argos(driver: WebDriver, item_name: str, url: str) -> Any:
     LOG.info(f"Loading {url} for item {item_name}")
@@ -92,11 +118,10 @@ def _create_chrome_web_driver():
     # options.add_argument("--ignore-certificate-errors")
     options.add_argument("--lang=en-GB")
     options.add_argument('--disable-blink-features=AutomationControlled')
-
     driver = webdriver.Chrome(options=options)
     # Remove navigator.webdriver Flag using JavaScript
     #driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-
+    driver.implicitly_wait(5)
     return driver
 
 
@@ -107,13 +132,17 @@ def _run_shop(shop: Shop, driver: WebDriver):
         is_available = False
         if shop.name.lower() == "argos":
             is_available = _is_available_to_buy_argos(driver, item_name, url)
-            if is_available and not previously_available:
-                LOG.info(f"Sending message as {item_name} is available in {shop.name} and not previously available")
-                message.send_message(f"{item_name} is available now from {url}")
-            else:
-                LOG.info(f"Item {item_name} is not available in shop {shop.name} or was previously available")
+        elif shop.name.lower() == "currys":
+            is_available = is_available_to_by_currys(driver, item_name, url)
         else:
-            LOG.error(f"Shop {shop.name} is not configure")
+            LOG.error(f"Shop {shop.name} is not configured")
+            continue
+
+        if is_available and not previously_available:
+            LOG.info(f"Sending message as {item_name} is available in {shop.name} and not previously available")
+            message.send_message(f"{item_name} is available now from {url}")
+        else:
+            LOG.info(f"Item {item_name} is not available in shop {shop.name} or was previously available")
         db.upsert(db.ShopRecord(
             id=f"{shop.name}_{item_name}_{uuid.uuid4()}",
             shop=shop.name,

@@ -1,8 +1,8 @@
 shops:
   argos:
-    xbox: https://www.argos.co.uk/product/9404102?clickPR=plp:1:1
+    #xbox: https://www.argos.co.uk/product/9404102?clickPR=plp:1:1
     ps5: https://www.argos.co.uk/product/8349000?clickPR=plp:1:2
-    ipad_air: https://www.argos.co.uk/product/1959411
+    #ipad_air: https://www.argos.co.uk/product/1959411
   currys:
     ps5: https://www.currys.co.uk/products/sony-playstation-5-825-gb-10203370.html
   # ao:
